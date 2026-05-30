@@ -3018,11 +3018,12 @@ function renderConfig(){
     +'</div>'
     // Datos
     +'<div class="card"><h3>Datos</h3>'
-    +'<button class="btn sec" onclick="showJSON()">📤 Exportar / copiar JSON</button>'
+    +'<button class="btn sec" onclick="showJSON()">📤 Exportar JSON</button>'
+    +'<button class="btn sec" onclick="showImport()">📥 Importar JSON</button>'
     +'<button class="btn sec" onclick="copySummary()">📋 Copiar resumen</button>'
     +'<button class="btn sec" onclick="resetDay()">🔄 Reiniciar ciclo</button>'
     +'<button class="btn red" onclick="resetAll()">🗑 Borrar todo</button></div>'
-    +'<div class="card muted" style="font-size:12px;text-align:center">UMBRAL App · '+ver+' · oscar@umbral</div>';
+    +'<div class="card muted" style="font-size:12px;text-align:center">UmbralX · '+ver+'</div>';
 }
 function showJSON(){
   let txt=JSON.stringify(D,null,2).replace(/</g,'&lt;');
@@ -3030,6 +3031,37 @@ function showJSON(){
     +'<button class="x" onclick="closeSheet()">✕</button></div>'
     +'<textarea id="jsonBox" class="ta" style="min-height:200px;font-size:11px">'+txt+'</textarea>'
     +'<button class="btn" onclick="copyEl(\'jsonBox\')">Copiar JSON</button>');
+}
+function showImport(){
+  sheet('<div class="sh"><div><h2>📥 Importar datos</h2><p>Pega tu JSON aquí</p></div>'
+    +'<button class="x" onclick="closeSheet()">✕</button></div>'
+    +'<p style="font-size:14px;color:var(--muted);margin:0 0 12px;line-height:1.5">Pega el JSON que exportaste desde una versión anterior. Esto <strong>reemplaza</strong> todos los datos actuales.</p>'
+    +'<textarea id="importBox" class="ta" style="min-height:200px;font-size:11px" placeholder="Pega el JSON aquí..."></textarea>'
+    +'<button class="btn" onclick="doImport()" style="margin-top:8px">✅ Importar y restaurar</button>'
+    +'<button class="btn sec" onclick="closeSheet()">Cancelar</button>');
+}
+function doImport(){
+  var box=document.getElementById('importBox');
+  if(!box||!box.value.trim()){ok('Pega el JSON primero');return;}
+  try{
+    var parsed=JSON.parse(box.value.trim());
+    // Validar que tiene estructura correcta
+    if(!parsed.events||!parsed.current){
+      ok('JSON inválido — no parece ser un backup de UmbralX');
+      return;
+    }
+    // Confirmar antes de reemplazar
+    var evCount=parsed.events?parsed.events.length:0;
+    var dayCount=parsed.closures?parsed.closures.length:0;
+    if(!confirm('¿Restaurar datos?\n'+evCount+' eventos · '+dayCount+' días cerrados\nEsto reemplaza los datos actuales.')){return;}
+    localStorage.setItem(STORE,JSON.stringify(parsed));
+    D=parsed;
+    render();
+    closeSheet();
+    ok('✅ Datos restaurados · '+evCount+' eventos · '+dayCount+' días');
+  } catch(e){
+    ok('Error al leer el JSON: '+e.message);
+  }
 }
 function copyEl(id){
   let b=document.getElementById(id);b.select();b.setSelectionRange(0,99999);
